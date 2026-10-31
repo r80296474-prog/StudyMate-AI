@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}AI Study Tutor — StudyMate AI{% endblock %}
+{% block page_title %}AI Study Tutor{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <!-- Chat Header -->
+    <div class="chat-header">
+        <div class="chat-header-title">
+            <div class="msg-avatar ai">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <div>
+                <h3>StudyMate AI Tutor</h3>
+                <p><i class="fa-solid fa-circle" style="color: var(--status-success); font-size: 0.55rem; margin-right: 4px;"></i> Active Academic Assistant</p>
+            </div>
+        </div>
+        <button type="button" class="btn btn-secondary btn-sm" id="btnClearChat" title="Clear conversation history">
+            <i class="fa-solid fa-trash-can"></i>
+            <span>Clear Chat</span>
+        </button>
+    </div>
+
+    <!-- Suggested Quick Topic Prompt Chips -->
+    <div class="prompt-chips-bar" id="promptChips">
+        <button type="button" class="prompt-chip" data-prompt="Explain Binary Search simply like I'm a beginner">
+            <i class="fa-solid fa-magnifying-glass"></i> Binary Search Explained
+        </button>
+        <button type="button" class="prompt-chip" data-prompt="What is the difference between a Process and a Thread?">
+            <i class="fa-solid fa-microchip"></i> Process vs Thread
+        </button>
+        <button type="button" class="prompt-chip" data-prompt="Explain ACID properties in database management systems">
+            <i class="fa-solid fa-database"></i> ACID Properties
+        </button>
+        <button type="button" class="prompt-chip" data-prompt="Explain Database Normalization: 1NF, 2NF, 3NF, BCNF">
+            <i class="fa-solid fa-table"></i> Normalization (1NF-3NF)
+        </button>
+        <button type="button" class="prompt-chip" data-prompt="Compare TCP and UDP protocols with examples">
+            <i class="fa-solid fa-network-wired"></i> TCP vs UDP
+        </button>
+        <button type="button" class="prompt-chip" data-prompt="Explain the 4 pillars of Object-Oriented Programming (OOP)">
+            <i class="fa-solid fa-cubes"></i> 4 Pillars of OOP
+        </button>
+        <button type="button" class="prompt-chip" data-prompt="What are the best scientifically proven study tips for engineering exams?">
+            <i class="fa-solid fa-lightbulb"></i> Exam Study Strategies
+        </button>
+    </div>
+
+    <!-- Scrollable Messages Feed -->
+    <div class="chat-messages" id="chatMessages">
+        <!-- Initial Welcome Message from Bot -->
+        <div class="message-row ai-row">
+            <div class="msg-avatar ai">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <div class="msg-bubble">
+                <div class="msg-text">
+                    <h4 style="font-size: 1.1rem; color: var(--accent-cyan); margin-bottom: 6px;">
+                        Hello, {{ session.get('username', 'Student') }}! 👋
+                    </h4>
+                    I am your <strong>AI Study Tutor</strong>. I am here to help you understand difficult computer science concepts, summarize lecture notes, review algorithms, and prepare for semester exams.<br><br>
+                    You can type any question below, paste notes starting with <code>summarize:</code>, or click any topic chip above to get started!
+                </div>
+                <span class="msg-time">System</span>
+            </div>
+        </div>
+
+        <!-- Render Past Chat History from SQLite -->
+        {% if chat_history %}
+            {% for chat in chat_history %}
+                <!-- Student Question -->
+                <div class="message-row user-row">
+                    <div class="msg-avatar user">
+                        <i class="fa-solid fa-user"></i>
+                    </div>
+                    <div class="msg-bubble">
+                        <div class="msg-text">{{ chat.user_message }}</div>
+                        <span class="msg-time">{{ chat.timestamp }}</span>
+                    </div>
+                </div>
+
+                <!-- AI Answer -->
+                <div class="message-row ai-row">
+                    <div class="msg-avatar ai">
+                        <i class="fa-solid fa-robot"></i>
+                    </div>
+                    <div class="msg-bubble">
+                        <div class="msg-text" style="white-space: pre-wrap;">{{ chat.ai_response }}</div>
+                        <span class="msg-time">{{ chat.timestamp }}</span>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Animated Typing Indicator -->
+        <div class="message-row ai-row typing-indicator" id="typingIndicator">
+            <div class="msg-avatar ai">
+                <i class="fa-solid fa-robot"></i>
+            </div>
+            <div style="display: flex; gap: 5px; align-items: center; padding: 12px 16px; background: rgba(255, 255, 255, 0.04); border-radius: var(--radius-lg); border: 1px solid var(--border-subtle);">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 6px;">AI is thinking...</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Message Input Bar -->
+    <form class="chat-input-bar" id="chatForm">
+        <input type="text" 
+               id="chatInput" 
+               placeholder="Ask a study question (e.g. 'Explain Dijkstra Algorithm' or 'summarize: my notes')..." 
+               autocomplete="off" 
+               required>
+        <button type="submit" class="chat-send-btn" id="btnSendChat" title="Send Question" aria-label="Send Question">
+            <i class="fa-solid fa-paper-plane"></i>
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

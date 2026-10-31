@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Study Timetable — StudyMate AI{% endblock %}
+{% block page_title %}Study Timetable{% endblock %}
+
+{% block content %}
+<div class="timetable-container">
+    <!-- Header with Action -->
+    <div class="tasks-header-bar">
+        <div>
+            <h2 style="font-size: 1.6rem; margin-bottom: 4px;">Weekly Study Schedule</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem;">Plan your weekly lectures, study blocks, and revision routines.</p>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="openModal('addSlotModal')" id="btn-open-add-slot">
+            <i class="fa-solid fa-plus"></i>
+            <span>Add Study Session</span>
+        </button>
+    </div>
+
+    <!-- 7-Day Weekly Grid -->
+    <div class="timetable-grid">
+        {% set days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+        {% for day in days %}
+            {% set day_slots = slots_by_day.get(day, []) %}
+            <div class="day-column" id="day-column-{{ day|lower }}">
+                <div class="day-header">
+                    <h4>{{ day }}</h4>
+                    <span class="day-count-badge">{{ day_slots|length }} sessions</span>
+                </div>
+
+                <div class="slot-list">
+                    {% if day_slots %}
+                        {% for slot in day_slots %}
+                            <div class="slot-card" id="slot-{{ slot.id }}">
+                                <div class="slot-time">
+                                    <i class="fa-regular fa-clock"></i>
+                                    <span>{{ slot.start_time }} - {{ slot.end_time }}</span>
+                                </div>
+                                <div class="slot-subject">{{ slot.subject }}</div>
+                                {% if slot.notes %}
+                                    <div class="slot-notes">{{ slot.notes }}</div>
+                                {% endif %}
+
+                                <!-- Delete Slot Form -->
+                                <form action="{{ url_for('delete_timetable_slot_route', slot_id=slot.id) }}" method="POST" onsubmit="return confirm('Delete this study session?');">
+                                    <button type="submit" class="slot-delete-btn" title="Delete Session" aria-label="Delete Session">
+                                        <i class="fa-solid fa-trash-can"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-day-state">
+                            <i class="fa-regular fa-calendar-xmark" style="font-size: 1.8rem; margin-bottom: 8px; display: block; opacity: 0.4;"></i>
+                            <p>No study blocks scheduled</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <button type="button" class="btn btn-secondary btn-sm" style="margin-top: 14px; width: 100%;" onclick="openAddSlotForDay('{{ day }}')">
+                    <i class="fa-solid fa-plus"></i> Add for {{ day[:3] }}
+                </button>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- ==============================================
+     ADD STUDY SESSION MODAL
+     ============================================== -->
+<div class="modal-overlay" id="addSlotModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-calendar-plus" style="color: var(--accent-cyan);"></i> Add Study Session</h3>
+            <button type="button" class="modal-close-btn" onclick="closeModal('addSlotModal')" aria-label="Close Modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form action="{{ url_for('add_timetable_slot_route') }}" method="POST">
+                <div class="form-group">
+                    <label class="form-label" for="slot_day">Day of the Week *</label>
+                    <select name="day_of_week" id="slot_day" class="form-control" required>
+                        <option value="Monday">Monday</option>
+                        <option value="Tuesday">Tuesday</option>
+                        <option value="Wednesday">Wednesday</option>
+                        <option value="Thursday">Thursday</option>
+                        <option value="Friday">Friday</option>
+                        <option value="Saturday">Saturday</option>
+                        <option value="Sunday">Sunday</option>
+                    </select>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label" for="slot_start">Start Time *</label>
+                        <input type="time" name="start_time" id="slot_start" class="form-control" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="slot_end">End Time *</label>
+                        <input type="time" name="end_time" id="slot_end" class="form-control" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="slot_subject">Subject / Course Name *</label>
+                    <input type="text" name="subject" id="slot_subject" class="form-control" placeholder="e.g. Operating Systems Lecture" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="slot_notes">Notes / Location / Room (Optional)</label>
+                    <input type="text" name="notes" id="slot_notes" class="form-control" placeholder="e.g. Lab 3, Revise Semaphores & Mutex">
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addSlotModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-slot">
+                        <i class="fa-solid fa-check"></i> Save Schedule
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/timetable.js') }}"></script>
+<script>
+    function openAddSlotForDay(day) {
+        const select = document.getElementById('slot_day');
+        if (select) select.value = day;
+        openModal('addSlotModal');
+    }
+</script>
+{% endblock %}

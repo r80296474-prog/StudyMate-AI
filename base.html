@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}AI Student Study Assistant{% endblock %}</title>
+    
+    <!-- Google Fonts: Inter & Outfit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Global Custom Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-badge">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div class="logo-text">
+                    <h2>StudyMate</h2>
+                    <span>AI Assistant</span>
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section-title">Overview</div>
+                <a href="{{ url_for('dashboard') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}" id="nav-dashboard">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>Dashboard</span>
+                </a>
+
+                <div class="nav-section-title">AI Study Tools</div>
+                <a href="{{ url_for('chatbot') }}" class="nav-item {% if request.endpoint == 'chatbot' %}active{% endif %}" id="nav-chatbot">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>AI Study Tutor</span>
+                </a>
+                <a href="{{ url_for('quiz') }}" class="nav-item {% if request.endpoint == 'quiz' %}active{% endif %}" id="nav-quiz">
+                    <i class="fa-solid fa-brain"></i>
+                    <span>AI Quiz Generator</span>
+                </a>
+
+                <div class="nav-section-title">Productivity</div>
+                <a href="{{ url_for('timetable') }}" class="nav-item {% if request.endpoint == 'timetable' %}active{% endif %}" id="nav-timetable">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Study Timetable</span>
+                </a>
+                <a href="{{ url_for('tasks') }}" class="nav-item {% if request.endpoint == 'tasks' %}active{% endif %}" id="nav-tasks">
+                    <i class="fa-solid fa-list-check"></i>
+                    <span>Tasks & To-Do</span>
+                </a>
+            </nav>
+
+            <!-- User Profile & Logout -->
+            <div class="sidebar-footer">
+                <div class="user-profile-badge">
+                    <div class="user-avatar" id="user-avatar">
+                        {{ session.get('username', 'S')[0]|upper }}
+                    </div>
+                    <div class="user-info">
+                        <div class="user-name" id="user-display-name">{{ session.get('username', 'Student') }}</div>
+                        <div class="user-status">Online</div>
+                    </div>
+                    <a href="{{ url_for('logout') }}" class="logout-btn" title="Log Out" id="btn-logout">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    </a>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <!-- Top Navigation Bar -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="menu-toggle" id="menuToggle" aria-label="Toggle Navigation">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="page-title">
+                        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                    </div>
+                </div>
+
+                <div class="topbar-right">
+                    <div class="ai-status-indicator" title="AI Model is active and ready">
+                        <span class="ai-pulse-dot"></span>
+                        <span>AI Ready</span>
+                    </div>
+                    <div class="date-badge" id="currentDate">
+                        <i class="fa-regular fa-clock"></i> <span id="dateDisplay">Today</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Flash Alert Messages -->
+            <div class="flash-container" id="flashContainer">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-alert {{ category }}">
+                                <i class="fa-solid {% if category == 'success' %}fa-circle-check{% elif category == 'danger' or category == 'error' %}fa-circle-exclamation{% else %}fa-circle-info{% endif %}"></i>
+                                <span>{{ message }}</span>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <!-- Page Body Content Injection -->
+            <main class="page-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    <!-- Core App JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

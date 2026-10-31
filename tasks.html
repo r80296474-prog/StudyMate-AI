@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Tasks & Homework — StudyMate AI{% endblock %}
+{% block page_title %}Tasks & Homework{% endblock %}
+
+{% block content %}
+<div class="tasks-container">
+    <!-- Top Bar with Actions -->
+    <div class="tasks-header-bar">
+        <div>
+            <h2 style="font-size: 1.6rem; margin-bottom: 4px;">Study Tasks & Assignments</h2>
+            <p style="color: var(--text-muted); font-size: 0.88rem;">Track your homework, lab reports, and exam preparation.</p>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="openModal('addTaskModal')" id="btn-open-add-task">
+            <i class="fa-solid fa-plus"></i>
+            <span>Add New Task</span>
+        </button>
+    </div>
+
+    <!-- Progress Metric Card -->
+    <div class="glass-card" style="margin-bottom: 24px; padding: 20px 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <span style="font-weight: 600; font-size: 0.95rem; color: var(--text-main);">Completion Progress</span>
+            <span class="badge badge-low" id="taskProgressBadge">{{ progress_percent }}%</span>
+        </div>
+        <div class="progress-container">
+            <div class="progress-bar-fill" id="taskProgressFill" style="width: {{ progress_percent }}%;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 6px;">
+            <span id="taskProgressLabel">{{ completed_count }} of {{ total_count }} tasks completed ({{ progress_percent }}%)</span>
+            <span>{{ pending_count }} pending</span>
+        </div>
+    </div>
+
+    <!-- Filter Pills -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 20px;">
+        <div class="filter-pills" id="taskFilters">
+            <button type="button" class="filter-pill active" data-filter="all">All ({{ total_count }})</button>
+            <button type="button" class="filter-pill" data-filter="pending">Pending ({{ pending_count }})</button>
+            <button type="button" class="filter-pill" data-filter="completed">Completed ({{ completed_count }})</button>
+            <button type="button" class="filter-pill" data-filter="high">High Priority</button>
+            <button type="button" class="filter-pill" data-filter="medium">Medium</button>
+            <button type="button" class="filter-pill" data-filter="low">Low</button>
+        </div>
+    </div>
+
+    <!-- Task Items List -->
+    {% if tasks %}
+        <div class="task-list" id="taskListContainer">
+            {% for task in tasks %}
+                <div class="task-item {% if task.is_completed %}completed{% endif %}" id="task-item-{{ task.id }}" data-priority="{{ task.priority }}">
+                    <div class="task-left">
+                        <!-- Toggle Button (AJAX) -->
+                        <button type="button" 
+                                class="task-checkbox-btn {% if task.is_completed %}checked{% endif %}" 
+                                onclick="toggleTaskStatus({{ task.id }}, this)"
+                                title="Click to toggle status"
+                                aria-label="Toggle task status">
+                            {% if task.is_completed %}
+                                <i class="fa-solid fa-check"></i>
+                            {% endif %}
+                        </button>
+
+                        <div class="task-info">
+                            <div class="task-title">{{ task.title }}</div>
+                            <div class="task-meta">
+                                <span><i class="fa-solid fa-book" style="color: var(--accent-cyan); margin-right: 4px;"></i> {{ task.subject }}</span>
+                                {% if task.due_date %}
+                                    <span><i class="fa-regular fa-calendar" style="margin-right: 4px;"></i> Due: {{ task.due_date }}</span>
+                                {% endif %}
+                                <span class="badge {% if task.priority == 'High' %}badge-high{% elif task.priority == 'Medium' %}badge-medium{% else %}badge-low{% endif %}">
+                                    {{ task.priority }} Priority
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="task-right">
+                        <!-- Delete Task Form -->
+                        <form action="{{ url_for('delete_task_route', task_id=task.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this task?');">
+                            <button type="submit" class="btn btn-danger btn-sm" title="Delete Task">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="glass-card" style="text-align: center; padding: 60px 20px;">
+            <i class="fa-solid fa-list-check" style="font-size: 3.5rem; color: var(--accent-primary); opacity: 0.5; margin-bottom: 16px; display: block;"></i>
+            <h3 style="font-size: 1.3rem; margin-bottom: 8px;">No study tasks found!</h3>
+            <p style="color: var(--text-muted); max-width: 450px; margin: 0 auto 20px; font-size: 0.9rem;">
+                Stay on top of your semester assignments, coding challenges, and exam revisions by adding your first task.
+            </p>
+            <button type="button" class="btn btn-primary" onclick="openModal('addTaskModal')">
+                <i class="fa-solid fa-plus"></i> Add Your First Task
+            </button>
+        </div>
+    {% endif %}
+</div>
+
+<!-- ==============================================
+     ADD TASK MODAL DIALOG
+     ============================================== -->
+<div class="modal-overlay" id="addTaskModal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3><i class="fa-solid fa-plus-circle" style="color: var(--accent-cyan);"></i> Add Study Task</h3>
+            <button type="button" class="modal-close-btn" onclick="closeModal('addTaskModal')" aria-label="Close Modal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form action="{{ url_for('add_task_route') }}" method="POST">
+                <div class="form-group">
+                    <label class="form-label" for="task_title">Task Description / Assignment Title *</label>
+                    <input type="text" name="title" id="task_title" class="form-control" placeholder="e.g. Implement Dijkstra's algorithm in Python" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="task_subject">Course / Academic Subject *</label>
+                    <input type="text" name="subject" id="task_subject" class="form-control" placeholder="e.g. Data Structures & Algorithms" required>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label class="form-label" for="task_priority">Priority Level</label>
+                        <select name="priority" id="task_priority" class="form-control">
+                            <option value="High">🔥 High Priority</option>
+                            <option value="Medium" selected>⚡ Medium</option>
+                            <option value="Low">🌱 Low</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="task_due_date">Due Date</label>
+                        <input type="date" name="due_date" id="task_due_date" class="form-control">
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal('addTaskModal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-submit-task">
+                        <i class="fa-solid fa-check"></i> Save Task
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/timetable.js') }}"></script>
+{% endblock %}
